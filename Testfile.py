@@ -7,17 +7,18 @@ import os
 import shutil
 import matplotlib.pyplot as plt
 import pretty_midi
+import pypianoroll
 from pypianoroll import Multitrack, Track
 import librosa.display
 from utils import *
 
-ROOT_PATH = '/Users/sumuzhao/Downloads/'
+ROOT_PATH = '/Users/shirleyqi/Documents/'
 test_ratio = 0.1
 LAST_BAR_MODE = 'remove'
 
 
 def get_bar_piano_roll(piano_roll):
-    if int(piano_roll.shape[0] % 64) is not 0:
+    if int(piano_roll.shape[0] % 64) != 0:
         if LAST_BAR_MODE == 'fill':
             piano_roll = np.concatenate((piano_roll, np.zeros((64 - piano_roll.shape[0] % 64, 128))), axis=0)
         elif LAST_BAR_MODE == 'remove':
@@ -35,63 +36,67 @@ def to_binary(bars, threshold=0.0):
 
 
 """1. divide the original set into train and test sets"""
-# l = [f for f in os.listdir(os.path.join(ROOT_PATH, 'MIDI/pop/pop_midi'))]
-# print(l)
+# l = [f for f in os.listdir(os.path.join(ROOT_PATH, 'MIDI/classical/cleaner_midi'))]
+# print(len(l))
 # idx = np.random.choice(len(l), int(test_ratio * len(l)), replace=False)
 # print(len(idx))
-# for i in idx:
-#     shutil.move(os.path.join(ROOT_PATH, 'MIDI/pop/pop_midi', l[i]),
-#                 os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/origin_midi', l[i]))
+# for i in range(len(l)):
+#     if i in idx:
+#         shutil.copyfile(os.path.join(ROOT_PATH, 'MIDI/classical/cleaner_midi', l[i]),
+#                     os.path.join(ROOT_PATH, 'MIDI/classical/test/cleaner_midi', l[i]))
+#     else:
+#         shutil.copyfile(os.path.join(ROOT_PATH, 'MIDI/classical/cleaner_midi', l[i]),
+#                     os.path.join(ROOT_PATH, 'MIDI/classical/train/cleaner_midi', l[i]))
 
 """2. convert_clean.py"""
 
 """3. choose the clean midi from original sets"""
-# if not os.path.exists(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_midi')):
-#     os.makedirs(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_midi'))
-# l = [f for f in os.listdir(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner'))]
+# if not os.path.exists(os.path.join(ROOT_PATH, 'MIDI/classical/cleaner_midi')):
+#     os.makedirs(os.path.join(ROOT_PATH, 'MIDI/classical/cleaner_midi'))
+# l = [f for f in os.listdir(os.path.join(ROOT_PATH, 'MIDI/classical/cleaner'))]
 # print(l)
 # print(len(l))
 # for i in l:
-#     shutil.copy(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/origin_midi', os.path.splitext(i)[0] + '.mid'),
-#                 os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_midi', os.path.splitext(i)[0] + '.mid'))
+#     shutil.copy(os.path.join(ROOT_PATH, 'MIDI/classical/origin_midi', os.path.splitext(i)[0] + '.mid'),
+#                 os.path.join(ROOT_PATH, 'MIDI/classical/cleaner_midi', os.path.splitext(i)[0] + '.mid'))
 
 """4. merge and crop"""
-# if not os.path.exists(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_midi_gen')):
-#     os.makedirs(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_midi_gen'))
-# if not os.path.exists(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_npy')):
-#     os.makedirs(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_npy'))
-# l = [f for f in os.listdir(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_midi'))]
+# if not os.path.exists(os.path.join(ROOT_PATH, 'MIDI/classical/train/cleaner_midi_gen')):
+#     os.makedirs(os.path.join(ROOT_PATH, 'MIDI/classical/train/cleaner_midi_gen'))
+# if not os.path.exists(os.path.join(ROOT_PATH, 'MIDI/classical/train/cleaner_npy')):
+#     os.makedirs(os.path.join(ROOT_PATH, 'MIDI/classical/train/cleaner_npy'))
+# l = [f for f in os.listdir(os.path.join(ROOT_PATH, 'MIDI/classical/train/cleaner_midi'))]
 # print(l)
 # count = 0
 # for i in range(len(l)):
 #     try:
-#         multitrack = Multitrack(beat_resolution=4, name=os.path.splitext(l[i])[0])
-#         x = pretty_midi.PrettyMIDI(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_midi', l[i]))
-#         multitrack.parse_pretty_midi(x)
-#
-#         category_list = {'Piano': [], 'Drums': []}
-#         program_dict = {'Piano': 0, 'Drums': 0}
-#
-#         for idx, track in enumerate(multitrack.tracks):
-#             if track.is_drum:
-#                 category_list['Drums'].append(idx)
-#             else:
-#                 category_list['Piano'].append(idx)
-#         tracks = []
-#         merged = multitrack[category_list['Piano']].get_merged_pianoroll()
-#         print(merged.shape)
-#
-#         pr = get_bar_piano_roll(merged)
-#         print(pr.shape)
-#         pr_clip = pr[:, :, 24:108]
-#         print(pr_clip.shape)
-#         if int(pr_clip.shape[0] % 4) != 0:
-#             pr_clip = np.delete(pr_clip, np.s_[-int(pr_clip.shape[0] % 4):], axis=0)
-#         pr_re = pr_clip.reshape(-1, 64, 84, 1)
-#         print(pr_re.shape)
-#         save_midis(pr_re, os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_midi_gen', os.path.splitext(l[i])[0] +
-#                                        '.mid'))
-#         np.save(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_npy', os.path.splitext(l[i])[0] + '.npy'), pr_re)
+#       multitrack = Multitrack(beat_resolution=4, name=os.path.splitext(l[i])[0])
+#       x = pretty_midi.PrettyMIDI(os.path.join(ROOT_PATH, 'MIDI/classical/train/cleaner_midi', l[i]))
+#       multitrack.parse_pretty_midi(x)
+
+#       category_list = {'Piano': [], 'Drums': []}
+#       program_dict = {'Piano': 0, 'Drums': 0}
+
+#       for idx, track in enumerate(multitrack.tracks):
+#           if track.is_drum:
+#               category_list['Drums'].append(idx)
+#           else:
+#               category_list['Piano'].append(idx)
+#       tracks = []
+#       merged = multitrack[category_list['Piano']].get_merged_pianoroll()
+#       print(merged.shape)
+
+#       pr = get_bar_piano_roll(merged)
+#       print(pr.shape)
+#       pr_clip = pr[:, :, 24:108]
+#       print(pr_clip.shape)
+#       if int(pr_clip.shape[0] % 4) != 0:
+#           pr_clip = np.delete(pr_clip, np.s_[-int(pr_clip.shape[0] % 4):], axis=0)
+#       pr_re = pr_clip.reshape(-1, 64, 84, 1)
+#       print(pr_re.shape)
+#       save_midis(pr_re, os.path.join(ROOT_PATH, 'MIDI/classical/train/cleaner_midi_gen', os.path.splitext(l[i])[0] +
+#                                       '.mid'))
+#       np.save(os.path.join(ROOT_PATH, 'MIDI/classical/train/cleaner_npy', os.path.splitext(l[i])[0] + '.npy'), pr_re)
 #     except:
 #         count += 1
 #         print('Wrong', l[i])
@@ -99,31 +104,31 @@ def to_binary(bars, threshold=0.0):
 # print(count)
 
 """5. concatenate into a big binary numpy array file"""
-# l = [f for f in os.listdir(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_npy'))]
+# l = [f for f in os.listdir(os.path.join(ROOT_PATH, 'MIDI/classical/train/cleaner_npy'))]
 # print(l)
-# train = np.load(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_npy', l[0]))
+# train = np.load(os.path.join(ROOT_PATH, 'MIDI/classical/train/cleaner_npy', l[0]))
 # print(train.shape, np.max(train))
 # for i in range(1, len(l)):
 #     print(i, l[i])
-#     t = np.load(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner_npy', l[i]))
+#     t = np.load(os.path.join(ROOT_PATH, 'MIDI/classical/train/cleaner_npy', l[i]))
 #     train = np.concatenate((train, t), axis=0)
 # print(train.shape)
-# np.save(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/pop_test_piano.npy'), (train > 0.0))
+# np.save(os.path.join(ROOT_PATH, 'MIDI/classical/test/classical_train_piano.npy'), (train > 0.0))
 
 """6. separate numpy array file into single phrases"""
-# if not os.path.exists(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/phrase_test')):
-#     os.makedirs(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/phrase_test'))
-# x = np.load(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/pop_test_piano.npy'))
-# print(x.shape)
-# count = 0
-# for i in range(x.shape[0]):
-#     if np.max(x[i]):
-#         count += 1
-#         np.save(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/phrase_test/pop_piano_test_{}.npy'.format(i+1)), x[i])
-#         print(x[i].shape)
-#    # if count == 11216:
-#    #     break
-# print(count)
+if not os.path.exists(os.path.join(ROOT_PATH, 'MIDI/classical/train/phrase_train')):
+    os.makedirs(os.path.join(ROOT_PATH, 'MIDI/classical/train/phrase_train'))
+x = np.load(os.path.join(ROOT_PATH, 'MIDI/classical/test/classical_train_piano.npy'))
+print(x.shape)
+count = 0
+for i in range(x.shape[0]):
+    if np.max(x[i]):
+        count += 1
+        np.save(os.path.join(ROOT_PATH, 'MIDI/classical/train/phrase_train/classical_piano_train_{}.npy'.format(i+1)), x[i])
+        print(x[i].shape)
+   # if count == 11216:
+   #     break
+print(count)
 
 """some other codes"""
 # filepaths = []

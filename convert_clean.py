@@ -2,13 +2,14 @@ from __future__ import print_function
 import os
 import json
 import errno
+import pypianoroll
 from pypianoroll import Multitrack, Track
 import pretty_midi
 import shutil
 
-ROOT_PATH = '/Users/sumuzhao/Downloads/'
-converter_path = os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/converter')
-cleaner_path = os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/cleaner')
+ROOT_PATH = '/Users/shirleyqi/Documents/'
+converter_path = os.path.join(ROOT_PATH, 'MIDI/classical/converter')
+cleaner_path = os.path.join(ROOT_PATH, 'MIDI/classical/cleaner')
 
 
 def make_sure_path_exists(path):
@@ -100,18 +101,23 @@ def converter(filepath):
     """Save a multi-track piano-roll converted from a MIDI file to target
     dataset directory and update MIDI information to `midi_dict`"""
     try:
-        midi_name = os.path.splitext(os.path.basename(filepath))[0]
-        multitrack = Multitrack(resolution=24, name=midi_name)
+      midi_name = os.path.splitext(os.path.basename(filepath))[0]
+      # multitrack = Multitrack(resolution=24, name=midi_name)
 
-        pm = pretty_midi.PrettyMIDI(filepath)
-        midi_info = get_midi_info(pm)
-        multitrack = pypianoroll.from_pretty_midi(pm)
-        merged = get_merged(multitrack)
+      midi_name = os.path.splitext(os.path.basename(filepath))[0]
+      multitrack = Multitrack(beat_resolution=24, name=midi_name)
 
-        make_sure_path_exists(converter_path)
-        merged.save(os.path.join(converter_path, midi_name + '.npz'))
+      print(multitrack)
 
-        return [midi_name, midi_info]
+      pm = pretty_midi.PrettyMIDI(filepath)
+      midi_info = get_midi_info(pm)
+      multitrack.parse_pretty_midi(pm)
+      merged = get_merged(multitrack)
+
+      make_sure_path_exists(converter_path)
+      merged.save(os.path.join(converter_path, midi_name + '.npz'))
+
+      return [midi_name, midi_info]
 
     except:
         return None
@@ -119,19 +125,19 @@ def converter(filepath):
 
 def main():
     """Main function of the converter"""
-    midi_paths = get_midi_path(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/origin_midi'))
+    midi_paths = get_midi_path(os.path.join(ROOT_PATH, 'MIDI/classical/origin_midi'))
     midi_dict = {}
     kv_pairs = [converter(midi_path) for midi_path in midi_paths]
     for kv_pair in kv_pairs:
         if kv_pair is not None:
             midi_dict[kv_pair[0]] = kv_pair[1]
 
-    with open(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/midis.json'), 'w') as outfile:
+    with open(os.path.join(ROOT_PATH, 'MIDI/classical/midis.json'), 'w') as outfile:
         json.dump(midi_dict, outfile)
 
     print("[Done] {} files out of {} have been successfully converted".format(len(midi_dict), len(midi_paths)))
 
-    with open(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/midis.json')) as infile:
+    with open(os.path.join(ROOT_PATH, 'MIDI/classical/midis.json')) as infile:
         midi_dict = json.load(infile)
     count = 0
     make_sure_path_exists(cleaner_path)
@@ -143,7 +149,7 @@ def main():
             shutil.copyfile(os.path.join(converter_path, key + '.npz'),
                             os.path.join(cleaner_path, key + '.npz'))
 
-    with open(os.path.join(ROOT_PATH, 'MIDI/pop/pop_test/midis_clean.json'), 'w') as outfile:
+    with open(os.path.join(ROOT_PATH, 'MIDI/classical/midis_clean.json'), 'w') as outfile:
         json.dump(midi_dict_clean, outfile)
 
     print("[Done] {} files out of {} have been successfully cleaned".format(count, len(midi_dict)))
